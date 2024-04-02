@@ -1,15 +1,18 @@
 {
     "nombres":[
         {
-          "nombre": "Jeon Jungkook",
-          "usuario": "JK",
-          "contraseña": "1234"
+            "nombre": "Jeon Jungkook",
+            "usuario": "JK",
+            "email": "1234",
+            "password": 1234
         },
         {
             "nombre": "root",
             "usuario": "pepe",
-            "contraseña": "5678"
-          }
+            "email": "5678",
+            "password": 1234
+
+        }
     ],
     
     "productos":[
@@ -56,6 +59,18 @@
             "stock": 1234
         }
 
+    ],
+    "pedidos":[
+        {
+            "nombre": "perro 2",
+            "direccion": "JK",
+            "numTarjet": 10,
+            "productospedidos":[
+                {
+                "nombre": "perro 2"
+                }
+            ]
+        }
     ]
 }
 
