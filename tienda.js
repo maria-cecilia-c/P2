@@ -5,6 +5,7 @@ const path = require('path');
 const PUERTO = 9090;
 const FORMULARIO = fs.readFileSync('login.html', 'utf-8');
 const RESPUESTA = fs.readFileSync('gorrito1.html', 'utf-8'); //!VER 
+const RESPUESTA_LOGIN = fs.readFileSync('tienda.html', 'utf-8'); //!VER 
 
 //----------json
 DATAJSON =  fs.readFileSync('tienda.json', 'utf-8')
@@ -48,25 +49,15 @@ const server = http.createServer((req, res) => {
         break;
     }
 
+   
+   
+    //if (req.method === 'POST') {
+    //    
+    //}
+
     
+    if (req.method === 'POST') {
 
-    if (req.method === 'POST' && req.url === '/procesar') {
-
-        req.on('data', (cuerpo) => {       
-          req.setEncoding('utf8');
-          console.log(` ${cuerpo}`);
-        });        
-
-
-        // Manejar el final de la solicitud
-        req.on('end', () => {
-            // Generar la respuesta
-            res.setHeader('Content-Type', 'text/html');
-            res.write(RESPUESTA);
-            res.end();
-        });
-
-        
         if (url == '/procesar'){
             console.log('----Login----')
             req.on('data', (content)=> {
@@ -74,12 +65,41 @@ const server = http.createServer((req, res) => {
                 content =  convert2Dic(content,"=")
                 if(content['userName'] != ""){
                     console.log(content['userName'])
-                    //todo: ver si el usuario existe, mediante una función.
                     check = checkUser(content['userName'] , content['password'] ,DATAJSON)
-                    console.log(check)
+                    // TRUE: saludo y ahora puede añadir objetos al carrito
+                    if (check[0]) {
+                        console.log('TRUE');
+                        // Array que contiene las cookies que se desean establecer
+                        res.setHeader('Set-Cookie', ["userName=" + content['userName']]);
+                        res.writeHead(302, {
+                            'Location': '/tienda.html'
+                        });
+                        console.log('Estamos en tienda html');
+                        // Leer el archivo tienda.html
+                        fs.readFile("tienda.html", (err, data) => {
+                            if (!err) {
+                                // Obtener las cookies del cliente
+                                const cookies = getCookies(req);
+                                // Modificar el contenido de tienda.html
+                                data = manageMain(data, cookies);
+                                // Enviar el contenido modificado como respuesta
+                                res.end(data);
+                            }
+                        });
+                    } else {
+                        console.log('FALSE');
+                        res.writeHead(302, {
+                            'Location': '/no-login.html'
+                        });
+                        res.end();
+                    }                   
+
+                }else{
+                    console.log('error')
                 }
             });
         }
+        
 
     } else {
         // Manejar las solicitudes GET para otros recursos
@@ -146,20 +166,57 @@ function convert2Dic(params , split){
       dict[param[0]] = param[1];
     }
     return dict
+}
+  
+
+//metemos en la función el usuario, contraseña, y el Json donte tenemos los usuarios
+function checkUser(usuario,password,DATAJSON){
+  found = false
+  for (let i = 0; i <  DATAJSON.nombres.length; i++){
+
+    if(DATAJSON.nombres[i].usuario == usuario && DATAJSON.nombres[i].password == password ){
+      found = true;
+      break;
+    }
+  }
+  return [found]
+}
+
+
+
+function replaceJson(data, DATAJSON){
+    for (let i = 0; i <  DATAJSON.nombres.length; i++){
+      data = data.replace("NombreIniciado",  DATAJSON.nombres[i].nombre);
+    }
+    return data
+}
+  
+
+
+function manageMain(data, cookies) {
+  data = data.toString();
+  if (cookies['userName'] != null) {
+      console.log('user cookies, manageMain', cookies['userName']);
+      // Utiliza una expresión regular con el modificador global para reemplazar todas las ocurrencias de "usuario"
+      data = data.replace("usuario", cookies['userName']);
+      console.log('data: ', data)
+  } else {
+      console.log('error');
+  }
+  return data;
+}
+
+  
+  
+function getCookies(req){
+    let cookie = req.headers.cookie
+    if (cookie) {
+      cookie = cookie.replace(/\s/g, "");
+      cookie = cookie.split(";")
+      cookie = convert2Dic(cookie,"=")
+      return cookie
+    }else{
+      return {}
+    }
   }
   
-  //metemos en la función el usuario, contraseña, y el Json donte tenemos los usuarios
-  function checkUser(usuario,password,DATAJSON){
-    found = false
-    for (let i = 0; i <  DATAJSON.nombres.length; i++){
-        console.log('usuario que pongo yo',usuario)
-        console.log('Contraseña',password)
-
-      if(DATAJSON.nombres[i].usuario == usuario && DATAJSON.nombres[i].password == password ){
-        
-        found = true;
-        break;
-      }
-    }
-    return [found]
-  }
